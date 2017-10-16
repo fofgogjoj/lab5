@@ -14,10 +14,13 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 public class list {
+
+
     public static void writeDOM(ArrayList<String> listArray, Scanner scanner){
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder;
@@ -164,8 +167,43 @@ public class list {
                 e.printStackTrace();
             }
         }
+        if (format==2)
+        {
+            try
+            {
+                Class.forName("com.mysql.jdbc.Driver");
+                try
+                {
+                    con = DriverManager.getConnection("jdbc:mysql://localhost:3306/java5", "root", "");
+                    stmt = con.createStatement();
+                    rs = stmt.executeQuery("SELECT * FROM List");
+                    while (rs.next()) {
+                        String f1 = rs.getString("name");
+                        String f2 = rs.getString("surname");
+                        String f3 = rs.getString("patronymic");
+                        String f4 = rs.getString("school");
+                        String f5 = rs.getString("classSchool");
+                        String f6 = rs.getString("rating");
+                        System.out.println("Имя: " + f1
+                                + "\nФамилия: " +  f2
+                                + "\nОтчество: " + f3
+                                + "\nШкола: " + f4
+                                + "\nКласс: " + f5
+                                + "\nСредний балл: " + f6 +"\n");
+                    }
+
+                }catch (SQLException sqlEx) {
+                    sqlEx.printStackTrace();
+                }
+
+            }catch (ClassNotFoundException e) {
+                System.out.println("Отсуствует драйвер");
+                e.printStackTrace();
+                return;
+            }
+        }
     }
-    public static void displayMenu(ArrayList<String> listArray, Scanner sc)
+    public static void displayMenu(ArrayList<String> listArray, Scanner sc, Integer format)
     {
         System.out.println("\nВыберите дальнейшее действие:");
         System.out.println("(1) Добавить запись;");
@@ -176,114 +214,240 @@ public class list {
         System.out.println("(6) Выход из приложения.");
         Integer value= sc.nextInt();
         switch (value){
-            case 1: addRecord(listArray, sc);
+            case 1: addRecord(listArray, sc, format);
                 break;
-            case 2: changeRecord(listArray, sc);
+            case 2: changeRecord(listArray, sc, format);
                 break;
-            case 3: deleteRecord(listArray, sc);
+            case 3: deleteRecord(listArray, sc, format);
                 break;
             case 4: writeDOM(listArray, sc);
                 break;
             case 5: findRecord(listArray, sc);
                 break;
-            case 6:
+            case 6: System.exit(0);
                 break;
             default: System.out.println("Некорректное значение");
                 break;
         }
     }
-    public static void addRecord(ArrayList<String> listArray, Scanner sc)
+    public static void addRecord(ArrayList<String> listArray, Scanner sc, Integer format)
     {
-        System.out.println("Введите имя ученика: ");
-        listArray.add(sc.next());
-        System.out.println("Введите фамилию ученика: ");
-        listArray.add(sc.next());
-        System.out.println("Введите отчество ученика: ");
-        listArray.add(sc.next());
-        System.out.println("Введите номер школы: ");
-        listArray.add(sc.next());
-        System.out.println("Введите номер класса: ");
-        listArray.add(sc.next());
-        System.out.println("Введите среднюю оценку ученика: ");
-        listArray.add(sc.next());
+        if (format==1)
+        {
+            System.out.println("Введите имя ученика: ");
+            listArray.add(sc.next());
+            System.out.println("Введите фамилию ученика: ");
+            listArray.add(sc.next());
+            System.out.println("Введите отчество ученика: ");
+            listArray.add(sc.next());
+            System.out.println("Введите номер школы: ");
+            listArray.add(sc.next());
+            System.out.println("Введите номер класса: ");
+            listArray.add(sc.next());
+            System.out.println("Введите среднюю оценку ученика: ");
+            listArray.add(sc.next());
             System.out.println(listArray);
-            displayMenu(listArray,sc);
+        }
+        if (format==2)
+        {
+            String name,surname,patronymic, school,schoolClass, rating;
+            System.out.println("Введите имя ученика: ");
+            name=sc.next();
+            System.out.println("Введите фамилию ученика: ");
+            surname=sc.next();
+            System.out.println("Введите отчество ученика: ");
+            patronymic=sc.next();
+            System.out.println("Введите номер школы: ");
+            school=sc.next();
+            System.out.println("Введите номер класса: ");
+            schoolClass=sc.next();
+            System.out.println("Введите среднюю оценку ученика: ");
+            rating=sc.next();
+            try
+            {
+                Class.forName("com.mysql.jdbc.Driver");
+                try
+                {
+                    con.setAutoCommit(false);
+                    Statement st = con.createStatement();
+                    try {
+                        st.execute("insert into List(name, surname, patronymic, school, classSchool, rating) values('"+name+"', '"+surname+"', '"+patronymic+"', '"+school+"', '"+schoolClass+"', '"+rating+"')");
+                        con.commit();
+                        showList(2, listArray);
+                    } catch (SQLException e)  {
+                        con.rollback();
+                    }
+                }catch (SQLException sqlEx) {
+                    sqlEx.printStackTrace();
+                }
+            }catch (ClassNotFoundException e) {
+                System.out.println("Отсуствует драйвер");
+                e.printStackTrace();
+                return;
+            }
+        }
+            displayMenu(listArray,sc, format);
     }
-    public static void changeRecord(ArrayList<String> listArray, Scanner sc)
+    public static void changeRecord(ArrayList<String> listArray, Scanner sc, Integer format)
     {
         System.out.println("Введите фамилию ученика, информацию о котором необходимо изменить: ");
         String surname=sc.next();
-        int index = listArray.indexOf(surname);
+        switch(format) {
+            case 1:
+                int index = listArray.indexOf(surname);
 
-        if(index!=-1){
-            String text="";
-            String text1="";
-            System.out.println("Изменить имя ученика? (да/нет)");
-            String question=sc.next();
+                if (index != -1) {
+                    String text = "";
+                    String text1 = "";
+                    System.out.println("Изменить имя ученика? (да/нет)");
+                    String question = sc.next();
 
-            if(question.equals("да")){
-                text=listArray.get(index-1);
-                System.out.println("Предыдущее имя= "+text);
-                System.out.println("Новое имя= ");
-                text1=sc.next();
-                listArray.set(index-1, text1);
-            }
-            System.out.println("Изменить фамилию ученика? (да/нет)");
-            question=sc.next();
+                    if (question.equals("да")) {
+                        text = listArray.get(index - 1);
+                        System.out.println("Предыдущее имя= " + text);
+                        System.out.println("Новое имя= ");
+                        text1 = sc.next();
+                        listArray.set(index - 1, text1);
+                    }
+                    System.out.println("Изменить фамилию ученика? (да/нет)");
+                    question = sc.next();
 
-            if(question.equals("да")){
-                text=listArray.get(index);
-                System.out.println("Предыдущая фамилия= "+text);
-                System.out.println("Новая фамилия= ");
-                text1=sc.next();
-                listArray.set(index, text1);
-            }
-            System.out.println("Изменить отчество ученика? (да/нет)");
-            question=sc.next();
+                    if (question.equals("да")) {
+                        text = listArray.get(index);
+                        System.out.println("Предыдущая фамилия= " + text);
+                        System.out.println("Новая фамилия= ");
+                        text1 = sc.next();
+                        listArray.set(index, text1);
+                    }
+                    System.out.println("Изменить отчество ученика? (да/нет)");
+                    question = sc.next();
 
-            if(question.equals("да")){
-                text=listArray.get(index+1);
-                System.out.println("Предыдущая фамилия= "+text);
-                System.out.println("Новая фамилия= ");
-                text1=sc.next();
-                listArray.set(index+1, text1);
-            }
-            System.out.println("Изменить номер школы ученика? (да/нет)");
-            question=sc.next();
+                    if (question.equals("да")) {
+                        text = listArray.get(index + 1);
+                        System.out.println("Предыдущее отчество= " + text);
+                        System.out.println("Новая отчество= ");
+                        text1 = sc.next();
+                        listArray.set(index + 1, text1);
+                    }
+                    System.out.println("Изменить номер школы ученика? (да/нет)");
+                    question = sc.next();
 
-            if(question.equals("да")){
-                text=listArray.get(index+2);
-                System.out.println("Предыдущая школа= "+text);
-                System.out.println("Новая школа= ");
-                text1=sc.next();
-                listArray.set(index+2, text1);
-            }
-            System.out.println("Изменить номер класса ученика? (да/нет)");
-            question=sc.next();
+                    if (question.equals("да")) {
+                        text = listArray.get(index + 2);
+                        System.out.println("Предыдущая школа= " + text);
+                        System.out.println("Новая школа= ");
+                        text1 = sc.next();
+                        listArray.set(index + 2, text1);
+                    }
+                    System.out.println("Изменить номер класса ученика? (да/нет)");
+                    question = sc.next();
 
-            if(question.equals("да")){
-                text=listArray.get(index+3);
-                System.out.println("Предыдущий класс= "+text);
-                System.out.println("Новый класс= ");
-                text1=sc.next();
-                listArray.set(index+3, text1);
-            }
-            System.out.println("Изменить средний балл ученика? (да/нет)");
-            question=sc.next();
+                    if (question.equals("да")) {
+                        text = listArray.get(index + 3);
+                        System.out.println("Предыдущий класс= " + text);
+                        System.out.println("Новый класс= ");
+                        text1 = sc.next();
+                        listArray.set(index + 3, text1);
+                    }
+                    System.out.println("Изменить средний балл ученика? (да/нет)");
+                    question = sc.next();
 
-            if(question.equals("да")){
-                text=listArray.get(index+4);
-                System.out.println("Предыдущий балл= "+text);
-                System.out.println("Новый балл= ");
-                text1=sc.next();
-                listArray.set(index+4, text1);
-            }
-            System.out.println(listArray);
-            displayMenu(listArray,sc);
+                    if (question.equals("да")) {
+                        text = listArray.get(index + 4);
+                        System.out.println("Предыдущий балл= " + text);
+                        System.out.println("Новый балл= ");
+                        text1 = sc.next();
+                        listArray.set(index + 4, text1);
+                    }
+                    System.out.println(listArray);
+                    displayMenu(listArray, sc, format);
+                } else System.out.println("Введённого вами ученика нет в БД");
+                break;
+            case 2:
+                try
+                {
+                    Class.forName("com.mysql.jdbc.Driver");
+                    try
+                    {
+                        con.setAutoCommit(false);
+                        try {
+                PreparedStatement stat = con.prepareStatement("SELECT * FROM List WHERE surname=?");
+                stat.setString(1, surname);
+                ResultSet rs = stat.executeQuery();
+                rs.next();
+                String f1 = rs.getString("name");
+                String f2 = rs.getString("surname");
+                String f3 = rs.getString("patronymic");
+                String f4 = rs.getString("school");
+                String f5 = rs.getString("classSchool");
+                String f6 = rs.getString("rating");
+
+                System.out.println("Изменить имя ученика? (да/нет)");
+                String question=sc.next();
+                if(question.equals("да")){
+                    System.out.println("Новое имя ученика: ");
+                    f1=sc.next();
+                }
+                System.out.println("Изменить фамилию ученика? (да/нет)");
+                question=sc.next();
+                if(question.equals("да")){
+                    System.out.println("Новая фамилия ученика: ");
+                    f2=sc.next();
+                }
+                System.out.println("Изменить отчество ученика? (да/нет)");
+                question=sc.next();
+                if(question.equals("да")){
+                    System.out.println("Новое отчество ученика: ");
+                    f3=sc.next();
+                }
+                System.out.println("Изменить номер школы, в которой учится школьник? (да/нет)");
+                question=sc.next();
+                if(question.equals("да")){
+                    System.out.println("Новый номер школы: ");
+                    f4=sc.next();
+                }
+                System.out.println("Изменить номер класса, в котором учится школьник? (да/нет)");
+                question=sc.next();
+                if(question.equals("да")){
+                    System.out.println("Новый номер класса: ");
+                    f5=sc.next();
+                }
+                 System.out.println("Изменить среднюю оценку ученика? (да/нет)");
+                 question=sc.next();
+                  if(question.equals("да")){
+                      System.out.println("Новая средняя оценка: ");
+                      f6=sc.next();
+                 }
+
+                String sql = "UPDATE List set "+"name=?, surname=?, patronymic=?, school=?,classSchool=?, rating=? WHERE surname=?";
+                stat = con.prepareStatement(sql);
+                stat.setString(1, f1);
+                stat.setString(2, f2);
+                stat.setString(3, f3);
+                stat.setString(4, f4);
+                stat.setString(5, f5);
+                stat.setString(6, f6);
+                stat.setString(7, surname);
+                stat.executeUpdate();
+                            con.commit();
+                System.out.println("Данные обновлены");
+                        } catch (SQLException e)  {
+                            con.rollback();
+                        }
+                    }catch (SQLException sqlEx) {
+                        sqlEx.printStackTrace();
+                    }
+                }catch (ClassNotFoundException e) {
+                    System.out.println("Отсуствует драйвер");
+                    e.printStackTrace();
+                    return;
+                }
+                break;
+            default: System.out.println("Ошибка");
+                break;
         }
-        else System.out.println("Введённого вами ученика нет в БД");
     }
-    public static void deleteRecord(ArrayList<String> listArray, Scanner sc)
+    public static void deleteRecord(ArrayList<String> listArray, Scanner sc, Integer format)
     {
         System.out.println("Введите фамилию ученика, информацию о котором необходимо удалить: ");
         String Name=sc.next();
@@ -291,7 +455,7 @@ public class list {
         if(index!=-1){
             listArray.subList(index-1, index+5).clear();
             System.out.println(listArray);
-            displayMenu(listArray,sc);
+            displayMenu(listArray,sc, format);
         }
         else System.out.println("Введённого вами ученика нет в БД");
     }
@@ -350,12 +514,15 @@ public class list {
                 break;
         }
     }
+    private static Connection con;
+    private static Statement stmt;
+    private static ResultSet rs;
     public static void main(String[] args){
         ArrayList<String> listArray = new ArrayList<String>();
         Scanner sc = new Scanner(System.in);
         int format=list.checkFormat();
         System.out.println(format);
         showList(format, listArray);
-        displayMenu(listArray, sc);
+        displayMenu(listArray, sc, format);
     }
 }
