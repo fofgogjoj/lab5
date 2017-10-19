@@ -13,13 +13,14 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Properties;
 import java.util.Scanner;
 
 public class list {
-
 
     public static void writeDOM(ArrayList<String> listArray, Scanner scanner){
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -37,7 +38,17 @@ public class list {
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
             DOMSource source = new DOMSource(doc);
-            StreamResult file = new StreamResult(new File("./src/ru/bstu/it31/mishchenko/lab5/Список_учащихся_new.xml"));
+            Properties prop = new Properties();
+            String path="";
+            try {
+                FileInputStream fis = new FileInputStream("./src/ru/bstu/it31/mishchenko/lab5/config.properties");
+                prop.load(fis);
+                path = new String(prop.getProperty("path").getBytes("ISO8859-1"));
+            } catch (IOException e) {
+                System.out.println("Ошибка в программе: файл не найден");
+                e.printStackTrace();
+            }
+            StreamResult file = new StreamResult(new File(path));
             transformer.transform(source, file);
             System.out.println("Создание XML файла закончено");
         } catch (Exception e) {
@@ -220,11 +231,24 @@ public class list {
                 break;
             case 3: deleteRecord(listArray, sc, format);
                 break;
-            case 4: writeDOM(listArray, sc);
+            case 4: convertFormat(listArray, sc, format);
                 break;
             case 5: findRecord(listArray, sc);
                 break;
-            case 6: System.exit(0);
+            case 6:
+                switch (format)
+                {
+                    case 1:
+                        writeDOM(listArray, sc);
+                        System.exit(0);
+                        break;
+                    case 2:
+                        System.exit(0);
+                        break;
+                    default:
+                        System.out.println("Некорректное значение");
+                        break;
+                }
                 break;
             default: System.out.println("Некорректное значение");
                 break;
@@ -232,8 +256,22 @@ public class list {
     }
     public static void addRecord(ArrayList<String> listArray, Scanner sc, Integer format)
     {
-        if (format==1)
-        {
+        Properties prop = new Properties();
+        String minRating="";
+        String maxRating="";
+        try {
+            FileInputStream fis = new FileInputStream("./src/ru/bstu/it31/mishchenko/lab5/config.properties");
+            prop.load(fis);
+            minRating = new String(prop.getProperty("minRating").getBytes("ISO8859-1"));
+            maxRating = new String(prop.getProperty("maxRating").getBytes("ISO8859-1"));
+        } catch (IOException e) {
+            System.out.println("Ошибка в программе: файл не найден");
+            e.printStackTrace();
+        }
+        int min=Integer.parseInt(minRating);
+        int max=Integer.parseInt(maxRating);
+        switch (format){
+            case 1:
             System.out.println("Введите имя ученика: ");
             listArray.add(sc.next());
             System.out.println("Введите фамилию ученика: ");
@@ -245,11 +283,13 @@ public class list {
             System.out.println("Введите номер класса: ");
             listArray.add(sc.next());
             System.out.println("Введите среднюю оценку ученика: ");
-            listArray.add(sc.next());
+            float i = sc.nextFloat();
+            while (i<min || i>max)
+            i = sc.nextFloat();
+            listArray.add(Float.toString(i));
             System.out.println(listArray);
-        }
-        if (format==2)
-        {
+            break;
+            case 2:
             String name,surname,patronymic, school,schoolClass, rating;
             System.out.println("Введите имя ученика: ");
             name=sc.next();
@@ -262,10 +302,10 @@ public class list {
             System.out.println("Введите номер класса: ");
             schoolClass=sc.next();
             System.out.println("Введите среднюю оценку ученика: ");
-            rating=sc.next();
-            try
-            {
-                Class.forName("com.mysql.jdbc.Driver");
+                float value = sc.nextFloat();
+                while (value<min || value>max)
+                    value = sc.nextFloat();
+                rating=Float.toString(value);
                 try
                 {
                     con.setAutoCommit(false);
@@ -280,16 +320,29 @@ public class list {
                 }catch (SQLException sqlEx) {
                     sqlEx.printStackTrace();
                 }
-            }catch (ClassNotFoundException e) {
-                System.out.println("Отсуствует драйвер");
-                e.printStackTrace();
-                return;
-            }
+
+             break;
+            default: System.out.println("Выбран неверный формат представления.");
+            break;
         }
             displayMenu(listArray,sc, format);
     }
     public static void changeRecord(ArrayList<String> listArray, Scanner sc, Integer format)
     {
+        Properties prop = new Properties();
+        String minRating="";
+        String maxRating="";
+        try {
+            FileInputStream fis = new FileInputStream("./src/ru/bstu/it31/mishchenko/lab5/config.properties");
+            prop.load(fis);
+            minRating = new String(prop.getProperty("minRating").getBytes("ISO8859-1"));
+            maxRating = new String(prop.getProperty("maxRating").getBytes("ISO8859-1"));
+        } catch (IOException e) {
+            System.out.println("Ошибка в программе: файл не найден");
+            e.printStackTrace();
+        }
+        int min=Integer.parseInt(minRating);
+        int max=Integer.parseInt(maxRating);
         System.out.println("Введите фамилию ученика, информацию о котором необходимо изменить: ");
         String surname=sc.next();
         switch(format) {
@@ -356,7 +409,10 @@ public class list {
                         text = listArray.get(index + 4);
                         System.out.println("Предыдущий балл= " + text);
                         System.out.println("Новый балл= ");
-                        text1 = sc.next();
+                        float i = sc.nextFloat();
+                        while (i<min || i>max)
+                            i = sc.nextFloat();
+                        text1=Float.toString(i);
                         listArray.set(index + 4, text1);
                     }
                     System.out.println(listArray);
@@ -364,9 +420,6 @@ public class list {
                 } else System.out.println("Введённого вами ученика нет в БД");
                 break;
             case 2:
-                try
-                {
-                    Class.forName("com.mysql.jdbc.Driver");
                     try
                     {
                         con.setAutoCommit(false);
@@ -416,7 +469,10 @@ public class list {
                  question=sc.next();
                   if(question.equals("да")){
                       System.out.println("Новая средняя оценка: ");
-                      f6=sc.next();
+                      float value = sc.nextFloat();
+                      while (value<min || value>max)
+                          value = sc.nextFloat();
+                      f6=Float.toString(value);
                  }
 
                 String sql = "UPDATE List set "+"name=?, surname=?, patronymic=?, school=?,classSchool=?, rating=? WHERE surname=?";
@@ -437,11 +493,6 @@ public class list {
                     }catch (SQLException sqlEx) {
                         sqlEx.printStackTrace();
                     }
-                }catch (ClassNotFoundException e) {
-                    System.out.println("Отсуствует драйвер");
-                    e.printStackTrace();
-                    return;
-                }
                 break;
             default: System.out.println("Ошибка");
                 break;
@@ -450,14 +501,142 @@ public class list {
     public static void deleteRecord(ArrayList<String> listArray, Scanner sc, Integer format)
     {
         System.out.println("Введите фамилию ученика, информацию о котором необходимо удалить: ");
-        String Name=sc.next();
-        int index = listArray.indexOf(Name);
-        if(index!=-1){
-            listArray.subList(index-1, index+5).clear();
-            System.out.println(listArray);
-            displayMenu(listArray,sc, format);
+        String surName=sc.next();
+        switch (format) {
+            case 1: int index = listArray.indexOf(surName);
+                    if (index != -1) {
+                        listArray.subList(index - 1, index + 5).clear();
+                        System.out.println(listArray);
+                    } else System.out.println("Введённого вами ученика нет в БД");
+                    break;
+            case 2:
+                try
+                {
+                con.setAutoCommit(false);
+                PreparedStatement st = con.prepareStatement("DELETE FROM List WHERE surname = ?");
+                try {
+                st.setString(1,surName);
+                st.executeUpdate();
+                con.commit();
+                System.out.println("Удаление завершено");
+                } catch (SQLException e)  {
+                    con.rollback();
+                }
+                }catch (SQLException sqlEx) {
+                    sqlEx.printStackTrace();
+                }
+                break;
+            default: System.out.println("Выбран неверный формат представления.");
+                break;
         }
-        else System.out.println("Введённого вами ученика нет в БД");
+        displayMenu(listArray, sc, format);
+    }
+    public static void convertFormat(ArrayList<String> listArray, Scanner sc, Integer format)
+    {
+        switch (format)
+        {
+            case 1:
+                try {
+                    Class.forName("com.mysql.jdbc.Driver");
+                    String db_url="";
+                    String login="";
+                    String password="" ;
+                    Properties prop = new Properties();
+                    try {
+                        try {
+                            FileInputStream fis = new FileInputStream("./src/ru/bstu/it31/mishchenko/lab5/config.properties");
+                            prop.load(fis);
+                            db_url = new String(prop.getProperty("db_url").getBytes("ISO8859-1"));
+                            login = new String(prop.getProperty("login").getBytes("ISO8859-1"));
+                            password = new String(prop.getProperty("password").getBytes("ISO8859-1"));
+                        } catch (IOException e) {
+                            System.out.println("Ошибка в программе: файл не найден");
+                            e.printStackTrace();
+                        }
+                        con = DriverManager.getConnection(db_url, login, password);
+                        stmt = con.createStatement();
+                        PreparedStatement st = con.prepareStatement("DELETE FROM List");
+                        st.executeUpdate();
+                        String sql = "INSERT INTO List (name, surname, patronymic, school, classSchool, rating) VALUES (?,?,?,?,?,?)";
+                        PreparedStatement stat = con.prepareStatement(sql);
+                        for(int i=0; i<listArray.size();i+=6){
+                            stat.setString(1, listArray.get(i));
+                            stat.setString(2, listArray.get(i+1));
+                            stat.setString(3, listArray.get(i+2));
+                            stat.setString(4, listArray.get(i+3));
+                            stat.setString(5, listArray.get(i+4));
+                            stat.setString(6, listArray.get(i+5));
+                            stat.executeUpdate();
+                        }
+                    } catch (SQLException sqlEx) {
+                        sqlEx.printStackTrace();
+                    } finally {
+                        try { con.close(); } catch(SQLException se) {}
+                    }
+                } catch (ClassNotFoundException e) {
+                    System.out.println("Отсуствует драйвер");
+                    e.printStackTrace();
+                    return;
+                }
+                break;
+            case 2:
+                    try {
+                        Class.forName("com.mysql.jdbc.Driver");
+                        String db_url = "";
+                        String login = "";
+                        String password = "";
+                        Properties prop = new Properties();
+                        try {
+                        try {
+                            FileInputStream fis = new FileInputStream("./src/ru/bstu/it31/mishchenko/lab5/config.properties");
+                            prop.load(fis);
+                            db_url = new String(prop.getProperty("db_url").getBytes("ISO8859-1"));
+                            login = new String(prop.getProperty("login").getBytes("ISO8859-1"));
+                            password = new String(prop.getProperty("password").getBytes("ISO8859-1"));
+                        } catch (IOException e) {
+                            System.out.println("Ошибка в программе: файл не найден");
+                            e.printStackTrace();
+                        }
+                        con = DriverManager.getConnection(db_url, login, password);
+                        stmt = con.createStatement();
+                        rs = stmt.executeQuery("SELECT * FROM List");
+                        listArray.clear();
+                        while (rs.next()) {
+                            String f1 = rs.getString("name");
+                            String f2 = rs.getString("surname");
+                            String f3 = rs.getString("patronymic");
+                            String f4 = rs.getString("school");
+                            String f5 = rs.getString("classSchool");
+                            String f6 = rs.getString("rating");
+                            listArray.add(f1);
+                            listArray.add(f2);
+                            listArray.add(f3);
+                            listArray.add(f4);
+                            listArray.add(f5);
+                            listArray.add(f6);
+                            System.out.println("Имя: " + f1
+                                    + "\nФамилия: " +  f2
+                                    + "\nОтчество: " + f3
+                                    + "\nШкола: " + f4
+                                    + "\nКласс: " + f5
+                                    + "\nСредний балл: " + f6 +"\n");
+                            }
+                        } catch (SQLException sqlEx) {
+                            sqlEx.printStackTrace();
+                        } finally {
+                            try { con.close(); } catch(SQLException se) {}
+                        }
+                    } catch (ClassNotFoundException e) {
+                        System.out.println("Отсуствует драйвер");
+                        e.printStackTrace();
+                        return;
+                    }
+                writeDOM(listArray, sc);
+                break;
+            default:
+                System.out.println("Выбран неверный формат представления.");
+                break;
+        }
     }
     public static void fChoose(ArrayList<String> listArray)
     {
