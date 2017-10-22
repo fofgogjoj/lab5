@@ -30,8 +30,8 @@ public class list {
             Document doc = builder.newDocument();
             Element rootElement = doc.createElement("Список_учащихся");
             doc.appendChild(rootElement);
-            for(int i=0; i<listArray.size();i+=6)
-                rootElement.appendChild(getList(doc, listArray.get(i), listArray.get(i+1), listArray.get(i+2),listArray.get(i+3), listArray.get(i+4), listArray.get(i+5)));
+            for(int i=0; i<listArray.size();i+=7)
+                rootElement.appendChild(getList(doc, listArray.get(i), listArray.get(i+1), listArray.get(i+2),listArray.get(i+3), listArray.get(i+4), listArray.get(i+5), listArray.get(i+6)));
             doc.getDocumentElement().normalize();
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
@@ -55,8 +55,10 @@ public class list {
             e.printStackTrace();
         }
     }
-    private static Node getList(Document doc, String name, String surname, String patronymic, String school, String classSchool, String rating) {
-        Element list = doc.createElement("Список_учащихся");
+    private static Node getList(Document doc, String id, String name, String surname, String patronymic, String school, String classSchool, String rating) {
+        Element list = doc.createElement("Ученик");
+        list.setAttribute("Код", id); // устанавливаем атрибут id
+       // list.appendChild(getListElements(doc, list, "Код", id));
         list.appendChild(getListElements(doc, list, "Имя", name));
         list.appendChild(getListElements(doc, list, "Фамилия", surname));
         list.appendChild(getListElements(doc, list, "Отчество", patronymic));
@@ -189,18 +191,20 @@ public class list {
                     stmt = con.createStatement();
                     rs = stmt.executeQuery("SELECT * FROM List");
                     while (rs.next()) {
-                        String f1 = rs.getString("name");
-                        String f2 = rs.getString("surname");
-                        String f3 = rs.getString("patronymic");
-                        String f4 = rs.getString("school");
-                        String f5 = rs.getString("classSchool");
-                        String f6 = rs.getString("rating");
-                        System.out.println("Имя: " + f1
-                                + "\nФамилия: " +  f2
-                                + "\nОтчество: " + f3
-                                + "\nШкола: " + f4
-                                + "\nКласс: " + f5
-                                + "\nСредний балл: " + f6 +"\n");
+                        String f1 = rs.getString("id");
+                        String f2 = rs.getString("name");
+                        String f3 = rs.getString("surname");
+                        String f4 = rs.getString("patronymic");
+                        String f5 = rs.getString("school");
+                        String f6 = rs.getString("classSchool");
+                        String f7 = rs.getString("rating");
+                        System.out.println("Код: " + f1
+                                + "\nИмя: " +  f2
+                                + "\nФамилия: " +  f3
+                                + "\nОтчество: " + f4
+                                + "\nШкола: " + f5
+                                + "\nКласс: " + f6
+                                + "\nСредний балл: " + f7 +"\n");
                     }
 
                 }catch (SQLException sqlEx) {
@@ -272,6 +276,7 @@ public class list {
         int max=Integer.parseInt(maxRating);
         switch (format){
             case 1:
+
             System.out.println("Введите имя ученика: ");
             listArray.add(sc.next());
             System.out.println("Введите фамилию ученика: ");
@@ -602,24 +607,27 @@ public class list {
                         rs = stmt.executeQuery("SELECT * FROM List");
                         listArray.clear();
                         while (rs.next()) {
-                            String f1 = rs.getString("name");
-                            String f2 = rs.getString("surname");
-                            String f3 = rs.getString("patronymic");
-                            String f4 = rs.getString("school");
-                            String f5 = rs.getString("classSchool");
-                            String f6 = rs.getString("rating");
+                            String f1 = rs.getString("id");
+                            String f2 = rs.getString("name");
+                            String f3 = rs.getString("surname");
+                            String f4 = rs.getString("patronymic");
+                            String f5 = rs.getString("school");
+                            String f6 = rs.getString("classSchool");
+                            String f7 = rs.getString("rating");
                             listArray.add(f1);
                             listArray.add(f2);
                             listArray.add(f3);
                             listArray.add(f4);
                             listArray.add(f5);
                             listArray.add(f6);
-                            System.out.println("Имя: " + f1
-                                    + "\nФамилия: " +  f2
-                                    + "\nОтчество: " + f3
-                                    + "\nШкола: " + f4
-                                    + "\nКласс: " + f5
-                                    + "\nСредний балл: " + f6 +"\n");
+                            listArray.add(f7);
+                            System.out.println("Код: " + f1
+                                    + "\nИмя: " +  f2
+                                    + "\nФамилия: " +  f3
+                                    + "\nОтчество: " + f4
+                                    + "\nШкола: " + f5
+                                    + "\nКласс: " + f6
+                                    + "\nСредний балл: " + f7 +"\n");
                             }
                         } catch (SQLException sqlEx) {
                             sqlEx.printStackTrace();
