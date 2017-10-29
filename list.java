@@ -58,7 +58,7 @@ public class list {
     private static Node getList(Document doc, String id, String name, String surname, String patronymic, String school, String classSchool, String rating) {
         Element list = doc.createElement("Ученик");
         list.setAttribute("Код", id); // устанавливаем атрибут id
-       // list.appendChild(getListElements(doc, list, "Код", id));
+        list.appendChild(getListElements(doc, list, "Код", id));
         list.appendChild(getListElements(doc, list, "Имя", name));
         list.appendChild(getListElements(doc, list, "Фамилия", surname));
         list.appendChild(getListElements(doc, list, "Отчество", patronymic));
@@ -277,6 +277,8 @@ public class list {
         switch (format){
             case 1:
 
+               int id= listArray.size()-7;
+                listArray.add(Integer.toString(id));
             System.out.println("Введите имя ученика: ");
             listArray.add(sc.next());
             System.out.println("Введите фамилию ученика: ");
@@ -562,15 +564,16 @@ public class list {
                         stmt = con.createStatement();
                         PreparedStatement st = con.prepareStatement("DELETE FROM List");
                         st.executeUpdate();
-                        String sql = "INSERT INTO List (name, surname, patronymic, school, classSchool, rating) VALUES (?,?,?,?,?,?)";
+                        String sql = "INSERT INTO List (id,name, surname, patronymic, school, classSchool, rating) VALUES (?,?,?,?,?,?,?)";
                         PreparedStatement stat = con.prepareStatement(sql);
-                        for(int i=0; i<listArray.size();i+=6){
+                        for(int i=0; i<listArray.size();i+=7){
                             stat.setString(1, listArray.get(i));
                             stat.setString(2, listArray.get(i+1));
                             stat.setString(3, listArray.get(i+2));
                             stat.setString(4, listArray.get(i+3));
                             stat.setString(5, listArray.get(i+4));
                             stat.setString(6, listArray.get(i+5));
+                            stat.setString(7, listArray.get(i+6));
                             stat.executeUpdate();
                         }
                     } catch (SQLException sqlEx) {
